@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clean Streak</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Orbitron:wght@700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:  #00e5a0;
+      --glow:   #00e5a080;
+      --bg:     #0a0f1e;
+      --card:   #111827;
+      --border: #1f2d45;
+      --text:   #e2e8f0;
+      --muted:  #64748b;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    /* ── Animated starfield ── */
+    canvas#stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(92vw, 680px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      padding: 2rem 0 4rem;
+      margin: auto;
+    }
+
+    /* ── Badge ── */
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: #00e5a015;
+      border: 1px solid var(--green);
+      border-radius: 999px;
+      padding: .35rem 1rem;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+    .badge-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .4; transform: scale(.7); }
+    }
+
+    /* ── Heading ── */
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.6rem, 5vw, 2.6rem);
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #ffffff 0%, var(--green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: .95rem;
+      max-width: 380px;
+    }
+
+    /* ── Main counter card ── */
+    .hero-card {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      padding: 2.5rem 2rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      box-shadow: 0 0 60px #00e5a012, 0 20px 40px #0005;
+    }
+
+    /* ── Days big number ── */
+    .days-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .25rem;
+    }
+    .days-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(5rem, 20vw, 8rem);
+      font-weight: 900;
+      line-height: 1;
+      color: var(--green);
+      text-shadow: 0 0 40px var(--glow), 0 0 80px var(--glow);
+      letter-spacing: -.02em;
+      transition: color .3s;
+    }
+    .days-label {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── HMS row ── */
+    .hms-row {
+      display: flex;
+      gap: 1rem;
+      width: 100%;
+      justify-content: center;
+    }
+    .unit {
+      flex: 1;
+      max-width: 130px;
+      background: #0a0f1e;
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1rem .75rem .75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .3rem;
+    }
+    .unit-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.5rem, 5vw, 2.2rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+    .unit-label {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      width: 100%;
+    }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+    .progress-meta span:last-child { color: var(--green); font-weight: 700; }
+    .track {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00b4d8, var(--green));
+      border-radius: 999px;
+      transition: width .6s ease;
+      box-shadow: 0 0 10px var(--glow);
+    }
+
+    /* ── Start date footer ── */
+    .footer-note {
+      font-size: .78rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    .footer-note span { color: var(--text); }
+
+    /* ── Flash on tick ── */
+    @keyframes tick-flash {
+      0%   { color: #ffffff; text-shadow: 0 0 40px #fff, 0 0 80px var(--glow); }
+      100% { color: var(--green); text-shadow: 0 0 40px var(--glow), 0 0 80px var(--glow); }
+    }
+    .flash { animation: tick-flash .15s ease-out forwards; }
+  </style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="page">
+  <div class="badge"><span class="badge-dot"></span>Live Streak</div>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:.5rem">
+    <h1>Jim's Clean Streak</h1>
+    <p class="sub">Days free from junk food, sweets &amp; everything in between.</p>
+  </div>
+
+  <div class="hero-card">
+
+    <div class="days-block">
+      <div class="days-number" id="days">0</div>
+      <div class="days-label">Days</div>
+    </div>
+
+    <div class="hms-row">
+      <div class="unit">
+        <div class="unit-value" id="hours">00</div>
+        <div class="unit-label">Hours</div>
+      </div>
+      <div class="unit">
+        <div class="unit-value" id="minutes">00</div>
+        <div class="unit-label">Minutes</div>
+      </div>
+      <div class="unit">
+        <div class="unit-value" id="seconds">00</div>
+        <div class="unit-label">Seconds</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap" id="progress-wrap" style="display:none">
+      <div class="progress-meta">
+        <span id="progress-label">Next milestone</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="track"><div class="fill" id="fill" style="width:0%"></div></div>
+    </div>
+
+  </div>
+
+  <p class="footer-note">Streak started on <span id="start-label"></span></p>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────────────────────
+  // Change this to your actual start date/time
+  const START = new Date('2026-06-16T23:00:00');
+
+  const MILESTONES = [
+    { days: 1,   icon: '⚡', name: '24 Hours'  },
+    { days: 3,   icon: '🌱', name: 'Seedling'   },
+    { days: 7,   icon: '🔥', name: '1 Week'     },
+    { days: 14,  icon: '💪', name: '2 Weeks'    },
+    { days: 21,  icon: '🧠', name: '3 Weeks'    },
+    { days: 30,  icon: '🏅', name: '1 Month'    },
+    { days: 60,  icon: '🚀', name: '2 Months'   },
+    { days: 90,  icon: '🏆', name: '3 Months'   },
+    { days: 180, icon: '💎', name: '6 Months'   },
+    { days: 365, icon: '👑', name: '1 Year'     },
+  ];
+  // ───────────────────────────────────────────────────────────────────────────
+
+  // Format start date label
+  const startLabel = document.getElementById('start-label');
+  startLabel.textContent = START.toLocaleString('en-GB', {
+    weekday:'long', day:'numeric', month:'long', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+
+  // Pad helper
+  const pad = n => String(Math.floor(n)).padStart(2, '0');
+
+  // Flash helper
+  const flashEl = document.getElementById('days');
+  let lastDay = -1;
+
+  function tick() {
+    const now   = Date.now();
+    const diff  = Math.max(0, now - START.getTime());
+
+    const totalSeconds = Math.floor(diff / 1000);
+    const s  = totalSeconds % 60;
+    const m  = Math.floor(totalSeconds / 60) % 60;
+    const h  = Math.floor(totalSeconds / 3600) % 24;
+    const d  = Math.floor(totalSeconds / 86400);
+
+    document.getElementById('seconds').textContent = pad(s);
+    document.getElementById('minutes').textContent = pad(m);
+    document.getElementById('hours').textContent   = pad(h);
+    document.getElementById('days').textContent    = d;
+
+    // Flash on new day
+    if (d !== lastDay && lastDay !== -1) {
+      flashEl.classList.remove('flash');
+      void flashEl.offsetWidth; // reflow
+      flashEl.classList.add('flash');
+    }
+    lastDay = d;
+
+    // Progress bar to next milestone
+    const next = MILESTONES.find(ms => d < ms.days);
+    if (next) {
+      const prev = MILESTONES.slice().reverse().find(ms => ms.days <= d);
+      const from = prev ? prev.days : 0;
+      const pct  = Math.round(((d - from) / (next.days - from)) * 100);
+      document.getElementById('progress-wrap').style.display = '';
+      document.getElementById('progress-label').textContent  = `Next: ${next.name} (${next.days - d}d left)`;
+      document.getElementById('progress-pct').textContent    = `${pct}%`;
+      document.getElementById('fill').style.width            = `${pct}%`;
+    } else {
+      document.getElementById('progress-wrap').style.display = 'none';
+    }
+  }
+
+  tick();
+  setInterval(tick, 1000);
+
+  // ── Starfield canvas ────────────────────────────────────────────────────────
+  (function () {
+    const canvas = document.getElementById('stars');
+    const ctx    = canvas.getContext('2d');
+    let W, H, stars = [];
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    function makeStars(n) {
+      stars = Array.from({ length: n }, () => ({
+        x:  Math.random() * W,
+        y:  Math.random() * H,
+        r:  Math.random() * 1.2 + .2,
+        a:  Math.random(),
+        da: (Math.random() * .003 + .001) * (Math.random() < .5 ? 1 : -1),
+      }));
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      stars.forEach(s => {
+        s.a += s.da;
+        if (s.a > 1 || s.a < 0) s.da *= -1;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    makeStars(180);
+    draw();
+    window.addEventListener('resize', () => { resize(); makeStars(180); });
+  })();
+</script>
+</body>
+</html>

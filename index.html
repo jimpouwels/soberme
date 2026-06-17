@@ -296,6 +296,7 @@
   function tick() {
     const now   = Date.now();
     const diff  = Math.max(0, now - START.getTime());
+    const elapsedDays = diff / 86400000;
 
     const totalSeconds = Math.floor(diff / 1000);
     const s  = totalSeconds % 60;
@@ -317,13 +318,15 @@
     lastDay = d;
 
     // Progress bar to next milestone
-    const next = MILESTONES.find(ms => d < ms.days);
+    const next = MILESTONES.find(ms => elapsedDays < ms.days);
     if (next) {
-      const prev = MILESTONES.slice().reverse().find(ms => ms.days <= d);
+      const prev = MILESTONES.slice().reverse().find(ms => ms.days <= elapsedDays);
       const from = prev ? prev.days : 0;
-      const pct  = Math.round(((d - from) / (next.days - from)) * 100);
+      const ratio = (elapsedDays - from) / (next.days - from);
+      const pct = Math.max(0, Math.min(100, Math.round(ratio * 100)));
+      const daysLeft = Math.max(0, Math.ceil(next.days - elapsedDays));
       document.getElementById('progress-wrap').style.display = '';
-      document.getElementById('progress-label').textContent  = `Next: ${next.name} (${next.days - d}d left)`;
+      document.getElementById('progress-label').textContent  = `Next: ${next.name} (${daysLeft}d left)`;
       document.getElementById('progress-pct').textContent    = `${pct}%`;
       document.getElementById('fill').style.width            = `${pct}%`;
     } else {
